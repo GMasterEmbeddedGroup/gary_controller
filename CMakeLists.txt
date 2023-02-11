@@ -24,12 +24,15 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(realtime_tools REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
+find_package(gary_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
         src/offline_broadcaster.cpp
+        src/pid_controller.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
@@ -43,6 +46,8 @@ ament_target_dependencies(
         rclcpp_lifecycle
         realtime_tools
         diagnostic_msgs
+        gary_msgs
+        std_msgs
 )
 
 pluginlib_export_plugin_description_file(controller_interface gary_controller.xml)
@@ -84,6 +89,8 @@ ament_export_dependencies(
         rclcpp_lifecycle
         realtime_tools
         diagnostic_msgs
+        gary_msgs
+        std_msgs
 )
 ament_export_libraries(
         ${PROJECT_NAME}
