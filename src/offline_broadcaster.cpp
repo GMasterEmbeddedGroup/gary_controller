@@ -4,7 +4,7 @@
 using namespace gary_controller;
 
 
-OfflineBroadcaster::OfflineBroadcaster() : update_rate(10.0f), publisher(), flag_publish(false) {}
+OfflineBroadcaster::OfflineBroadcaster() : pub_rate(10.0f), publisher(), flag_publish(false) {}
 
 controller_interface::return_type OfflineBroadcaster::init(const std::string &controller_name) {
 
@@ -12,8 +12,9 @@ controller_interface::return_type OfflineBroadcaster::init(const std::string &co
     auto ret = ControllerInterface::init(controller_name);
     if (ret != controller_interface::return_type::OK) return ret;
 
+    this->auto_declare("interface_name", "offline");
     this->auto_declare("diagnose_topic", "/diagnostics");
-    this->auto_declare("update_rate", 10.0f);
+    this->auto_declare("pub_rate", 10.0f);
 
     return controller_interface::return_type::OK;
 }
@@ -42,6 +43,13 @@ CallbackReturn OfflineBroadcaster::on_configure(const rclcpp_lifecycle::State &p
 
     RCLCPP_DEBUG(this->get_node()->get_logger(), "configuring");
 
+    //get parameter: interface_name
+    if (this->get_node()->get_parameter("interface_name").get_type() != rclcpp::ParameterType::PARAMETER_STRING) {
+        RCLCPP_ERROR(this->get_node()->get_logger(), "interface_name type must be string");
+        return CallbackReturn::ERROR;
+    }
+    this->interface_name = this->get_node()->get_parameter("interface_name").as_string();
+
     //get parameter: diagnose_topic
     if (this->get_node()->get_parameter("diagnose_topic").get_type() != rclcpp::ParameterType::PARAMETER_STRING) {
         RCLCPP_ERROR(this->get_node()->get_logger(), "diagnose_topic type must be string");
@@ -49,12 +57,12 @@ CallbackReturn OfflineBroadcaster::on_configure(const rclcpp_lifecycle::State &p
     }
     this->diagnose_topic = this->get_node()->get_parameter("diagnose_topic").as_string();
 
-    //get parameter: update_rate
-    if (this->get_node()->get_parameter("update_rate").get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE) {
-        RCLCPP_ERROR(this->get_node()->get_logger(), "update_rate type must be double");
+    //get parameter: pub_rate
+    if (this->get_node()->get_parameter("pub_rate").get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE) {
+        RCLCPP_ERROR(this->get_node()->get_logger(), "pub_rate type must be double");
         return CallbackReturn::ERROR;
     }
-    this->update_rate = this->get_node()->get_parameter("update_rate").as_double();
+    this->pub_rate = this->get_node()->get_parameter("pub_rate").as_double();
 
     //create publisher
     auto publisher_ = this->get_node()->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(this->diagnose_topic,
@@ -101,7 +109,7 @@ controller_interface::return_type OfflineBroadcaster::update() {
             this->publisher->msg_.status.clear();
             //foreach all state interfaces
             for(const auto &i:this->state_interfaces_) {
-                if (i.get_interface_name() == "offline") {
+                if (i.get_interface_name() == this->interface_name) {
                     auto diagnostic_status = diagnostic_msgs::msg::DiagnosticStatus();
                     diagnostic_status.hardware_id = i.get_name();
                     diagnostic_status.name = i.get_name();
@@ -128,7 +136,7 @@ controller_interface::return_type OfflineBroadcaster::update() {
     auto time_now = this->get_node()->get_clock()->now();
 
     //control publish rate
-    if (time_now - this->last_time < (1000ms / this->update_rate)) {
+    if (time_now - this->last_time < (1000ms / this->pub_rate)) {
         return controller_interface::return_type::OK;
     }
 

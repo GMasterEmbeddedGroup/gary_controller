@@ -42,8 +42,9 @@ public:
 
 private:
     //params
+    std::string interface_name;
     std::string diagnose_topic;
-    double update_rate;
+    double pub_rate;
     //publisher
     std::unique_ptr<realtime_tools::RealtimePublisher<diagnostic_msgs::msg::DiagnosticArray>> publisher;
 
