@@ -33,6 +33,7 @@ add_library(${PROJECT_NAME} SHARED
         src/offline_broadcaster.cpp
         src/pid_controller.cpp
         src/pid_controller_with_filter.cpp
+        src/dual_loop_pid_controller.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
