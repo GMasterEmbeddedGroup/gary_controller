@@ -16,4 +16,20 @@
         </description>
     </class>
 
+    <class name="gary_controller/PIDControllerWithFilter"
+           type="gary_controller::PIDControllerWithFilter"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            PID controller with filter
+        </description>
+    </class>
+
+    <class name="gary_controller/DualLoopPIDController"
+           type="gary_controller::DualLoopPIDController"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            dual loop PID controller
+        </description>
+    </class>
+
 </library>

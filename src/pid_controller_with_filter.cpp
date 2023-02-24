@@ -192,7 +192,7 @@ controller_interface::return_type PIDControllerWithFilter::update() {
     //check if cmd is stale
     if (this->get_node()->get_clock()->now().seconds() - this->last_cmd_time > this->stale_threshold) {
         this->pid.set = 0;
-        this->pid.feedback = this->pid.feedback = this->state_interfaces_[0].get_value();
+        this->pid.feedback = this->state_interfaces_[0].get_value();
         this->pid.error = 0;
         this->pid.error_sum = 0;
         this->pid.last_error = 0;
