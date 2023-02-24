@@ -142,6 +142,8 @@ CallbackReturn PIDController::on_activate(const rclcpp_lifecycle::State &previou
     msg.data = 0.0f;
     this->cmd_buffer.writeFromNonRT(std::make_shared<std_msgs::msg::Float64>(msg));
 
+    this->pid_publisher->msg_.header.frame_id = "";
+
     RCLCPP_INFO(this->get_node()->get_logger(), "activated");
 
     return CallbackReturn::SUCCESS;
@@ -165,38 +167,19 @@ controller_interface::return_type PIDController::update() {
 
     //publish
     if (this->pid_publisher->trylock()) {
+        this->pid_publisher->msg_ = this->pid;
         this->pid_publisher->msg_.header.frame_id = "";
         this->pid_publisher->msg_.header.stamp = this->get_node()->get_clock()->now();
-        this->pid_publisher->msg_.kp = this->pid.kp;
-        this->pid_publisher->msg_.ki = this->pid.ki;
-        this->pid_publisher->msg_.kd = this->pid.kd;
-        this->pid_publisher->msg_.max_out = this->pid.max_out;
-        this->pid_publisher->msg_.max_iout = this->pid.max_iout;
-        this->pid_publisher->msg_.set = this->pid.set;
-        this->pid_publisher->msg_.feedback = this->pid.feedback;
-        this->pid_publisher->msg_.error = this->pid.error;
-        this->pid_publisher->msg_.error_sum = this->pid.error_sum;
-        this->pid_publisher->msg_.last_error = this->pid.last_error;
-        this->pid_publisher->msg_.pout = this->pid.pout;
-        this->pid_publisher->msg_.iout = this->pid.iout;
-        this->pid_publisher->msg_.dout = this->pid.dout;
-        this->pid_publisher->msg_.out = this->pid.out;
-
         this->pid_publisher->unlockAndPublish();
     }
 
     //get control command
     auto command = this->cmd_buffer.readFromRT()->get();
 
-    //no command received yet
-    if (command == nullptr) {
-        return controller_interface::return_type::OK;
-    }
-
     //check if cmd is stale
     if (this->get_node()->get_clock()->now().seconds() - this->last_cmd_time > this->stale_threshold) {
         this->pid.set = 0;
-        this->pid.feedback = this->pid.feedback = this->state_interfaces_[0].get_value();
+        this->pid.feedback = this->state_interfaces_[0].get_value();
         this->pid.error = 0;
         this->pid.error_sum = 0;
         this->pid.last_error = 0;
