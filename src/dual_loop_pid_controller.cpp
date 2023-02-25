@@ -25,7 +25,6 @@ controller_interface::return_type DualLoopPIDController::init(const std::string 
     this->auto_declare("inner_max_out", 0.0f);
     this->auto_declare("inner_max_iout", 0.0f);
 
-    this->auto_declare("outer_command_interface", "");
     this->auto_declare("outer_state_interface", "");
     this->auto_declare("outer_kp", 0.0f);
     this->auto_declare("outer_ki", 0.0f);
@@ -157,7 +156,7 @@ CallbackReturn DualLoopPIDController::on_configure(const rclcpp_lifecycle::State
     RCLCPP_INFO(this->get_node()->get_logger(), "inner_kp %f, inner_ki %f, inner_kd %f, inner_max_iout %f, inner_max_out %f",
                 this->pid.inner_kp, this->pid.inner_ki, this->pid.inner_kd, this->pid.inner_max_iout, this->pid.inner_max_out);
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "outer_command_interface: %s stale_threshold %f",
+    RCLCPP_INFO(this->get_node()->get_logger(), "outer_state_interface: %s stale_threshold %f",
                 this->outer_state_interface.c_str(), this->stale_threshold);
 
     RCLCPP_INFO(this->get_node()->get_logger(), "outer_kp %f, outer_ki %f, outer_kd %f, outer_max_iout %f, outer_max_out %f",
