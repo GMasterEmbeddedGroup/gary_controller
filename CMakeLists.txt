@@ -34,6 +34,7 @@ add_library(${PROJECT_NAME} SHARED
         src/pid_controller.cpp
         src/pid_controller_with_filter.cpp
         src/dual_loop_pid_controller.cpp
+        src/dual_loop_pid_controller_with_filter.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)

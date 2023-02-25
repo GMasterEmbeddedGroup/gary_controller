@@ -32,4 +32,12 @@
         </description>
     </class>
 
+    <class name="gary_controller/DualLoopPIDControllerWithFilter"
+           type="gary_controller::DualLoopPIDControllerWithFilter"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            dual loop PID controller with filter
+        </description>
+    </class>
+
 </library>
