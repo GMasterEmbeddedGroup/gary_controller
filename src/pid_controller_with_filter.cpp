@@ -210,7 +210,6 @@ controller_interface::return_type PIDControllerWithFilter::update() {
     this->pid.error = this->pid.set - this->pid.feedback;
 
     // p
-    this->pid.pout = this->pid.error * this->pid.kp;
     this->pid.pout = this->pid.p_filter_coefficient * this->pid.pout +
             (1 - this->pid.p_filter_coefficient) * this->pid.error * this->pid.kp;
     // i

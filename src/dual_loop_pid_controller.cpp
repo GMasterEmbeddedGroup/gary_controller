@@ -260,7 +260,6 @@ controller_interface::return_type DualLoopPIDController::update() {
 
     // p
     this->pid.outer_pout = this->pid.outer_error * this->pid.outer_kp;
-    this->pid.outer_pout = this->pid.outer_error * this->pid.outer_kp;
     // i
     this->pid.outer_error_sum += this->pid.outer_error;
     this->pid.outer_iout = this->pid.outer_error_sum * this->pid.outer_ki;
@@ -280,7 +279,6 @@ controller_interface::return_type DualLoopPIDController::update() {
     this->pid.inner_error = this->pid.inner_set - this->pid.inner_feedback;
 
     // p
-    this->pid.inner_pout = this->pid.inner_error * this->pid.inner_kp;
     this->pid.inner_pout = this->pid.inner_error * this->pid.inner_kp;
     // i
     this->pid.inner_error_sum += this->pid.inner_error;
