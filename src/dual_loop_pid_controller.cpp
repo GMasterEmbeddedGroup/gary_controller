@@ -193,8 +193,6 @@ CallbackReturn DualLoopPIDController::on_activate(const rclcpp_lifecycle::State 
     msg.data = 0.0f;
     this->cmd_buffer.writeFromNonRT(std::make_shared<std_msgs::msg::Float64>(msg));
 
-    this->pid_publisher->msg_.header.frame_id = "";
-
     RCLCPP_INFO(this->get_node()->get_logger(), "activated");
 
     return CallbackReturn::SUCCESS;
@@ -218,8 +216,9 @@ controller_interface::return_type DualLoopPIDController::update() {
 
     //publish
     if (this->pid_publisher->trylock()) {
-        this->pid_publisher->msg_.header.stamp = this->get_node()->get_clock()->now();
         this->pid_publisher->msg_ = this->pid;
+        this->pid_publisher->msg_.header.frame_id = "";
+        this->pid_publisher->msg_.header.stamp = this->get_node()->get_clock()->now();
         this->pid_publisher->unlockAndPublish();
     }
 
@@ -274,7 +273,7 @@ controller_interface::return_type DualLoopPIDController::update() {
 
 
     this->pid.inner_set = this->pid.outer_out;
-    this->pid.inner_feedback = this->state_interfaces_[1].get_value();
+    this->pid.inner_feedback = this->state_interfaces_[0].get_value();
     this->pid.inner_error = this->pid.inner_set - this->pid.inner_feedback;
 
     // p

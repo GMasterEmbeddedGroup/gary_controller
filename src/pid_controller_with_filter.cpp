@@ -156,8 +156,6 @@ CallbackReturn PIDControllerWithFilter::on_activate(const rclcpp_lifecycle::Stat
     msg.data = 0.0f;
     this->cmd_buffer.writeFromNonRT(std::make_shared<std_msgs::msg::Float64>(msg));
 
-    this->pid_publisher->msg_.header.frame_id = "";
-
     RCLCPP_INFO(this->get_node()->get_logger(), "activated");
 
     return CallbackReturn::SUCCESS;
@@ -181,8 +179,9 @@ controller_interface::return_type PIDControllerWithFilter::update() {
 
     //publish
     if (this->pid_publisher->trylock()) {
-        this->pid_publisher->msg_.header.stamp = this->get_node()->get_clock()->now();
         this->pid_publisher->msg_ = this->pid;
+        this->pid_publisher->msg_.header.frame_id = "";
+        this->pid_publisher->msg_.header.stamp = this->get_node()->get_clock()->now();
         this->pid_publisher->unlockAndPublish();
     }
 
