@@ -35,7 +35,7 @@ controller_interface::InterfaceConfiguration PIDController::state_interface_conf
     controller_interface::InterfaceConfiguration state_interfaces_config;
     state_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-    state_interfaces_config.names.emplace_back(this->state_interface_name);
+    if (!this->state_interface_name.empty()) state_interfaces_config.names.emplace_back(this->state_interface_name);
 
     return state_interfaces_config;
 }
@@ -46,7 +46,7 @@ controller_interface::InterfaceConfiguration PIDController::command_interface_co
     controller_interface::InterfaceConfiguration command_interfaces_config;
     command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-    command_interfaces_config.names.emplace_back(this->command_interface_name);
+    if (!this->command_interface_name.empty()) command_interfaces_config.names.emplace_back(this->command_interface_name);
 
     return command_interfaces_config;
 }
@@ -179,7 +179,7 @@ controller_interface::return_type PIDController::update() {
     //check if cmd is stale
     if (this->get_node()->get_clock()->now().seconds() - this->last_cmd_time > this->stale_threshold) {
         this->pid.set = 0;
-        this->pid.feedback = this->state_interfaces_[0].get_value();
+        this->pid.feedback = this->state_interfaces_.empty() ? 0 : this->state_interfaces_[0].get_value();
         this->pid.error = 0;
         this->pid.error_sum = 0;
         this->pid.last_error = 0;
@@ -187,13 +187,13 @@ controller_interface::return_type PIDController::update() {
         this->pid.iout = 0;
         this->pid.dout = 0;
         this->pid.out = 0;
-        this->command_interfaces_[0].set_value(0);
+        if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(0);
         return controller_interface::return_type::OK;
     }
 
 
     this->pid.set = command->data;
-    this->pid.feedback = this->state_interfaces_[0].get_value();
+    this->pid.feedback = this->state_interfaces_.empty() ? 0 : this->state_interfaces_[0].get_value();
     this->pid.error = this->pid.set - this->pid.feedback;
 
     // p
@@ -211,7 +211,7 @@ controller_interface::return_type PIDController::update() {
     if (this->pid.out > this->pid.max_out) this->pid.out = this->pid.max_out;
     if (this->pid.out < -this->pid.max_out) this->pid.out = -this->pid.max_out;
 
-    this->command_interfaces_[0].set_value(this->pid.out);
+    if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(0);
 
     return controller_interface::return_type::OK;
 }
