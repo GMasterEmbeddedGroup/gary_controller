@@ -211,7 +211,7 @@ controller_interface::return_type PIDController::update() {
     if (this->pid.out > this->pid.max_out) this->pid.out = this->pid.max_out;
     if (this->pid.out < -this->pid.max_out) this->pid.out = -this->pid.max_out;
 
-    this->command_interfaces_[0].set_value(this->command_interfaces_.empty() ? 0 : this->pid.out);
+    if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(this->pid.out);
 
     return controller_interface::return_type::OK;
 }
