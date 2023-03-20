@@ -58,57 +58,33 @@ CallbackReturn PIDController::on_configure(const rclcpp_lifecycle::State &previo
     RCLCPP_DEBUG(this->get_node()->get_logger(), "configuring");
 
     //get parameter: command_interface
-    if (!this->check_parameter("command_interface", rclcpp::ParameterType::PARAMETER_STRING)) {
-        return CallbackReturn::ERROR;
-    }
     this->command_interface_name = this->get_node()->get_parameter("command_interface").as_string();
 
     //get parameter: state_interface
-    if (!this->check_parameter("state_interface", rclcpp::ParameterType::PARAMETER_STRING)) {
-        return CallbackReturn::ERROR;
-    }
     this->state_interface_name = this->get_node()->get_parameter("state_interface").as_string();
 
     //get parameter: kp
-    if (!this->check_parameter("kp", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.kp = this->get_node()->get_parameter("kp").as_double();
 
     //get parameter: ki
-    if (!this->check_parameter("ki", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.ki = this->get_node()->get_parameter("ki").as_double();
 
     //get parameter: kd
-    if (!this->check_parameter("kd", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.kd = this->get_node()->get_parameter("kd").as_double();
 
     //get parameter: max_out
-    if (!this->check_parameter("max_out", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.max_out = this->get_node()->get_parameter("max_out").as_double();
 
     //get parameter: max_iout
-    if (!this->check_parameter("max_iout", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.max_iout = this->get_node()->get_parameter("max_iout").as_double();
 
     //get parameter: offline_threshold
-    if (!this->check_parameter("stale_threshold", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->stale_threshold = this->get_node()->get_parameter("stale_threshold").as_double();
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "command_interface: %s, state_interface: %s stale_threshold %f",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "command_interface: %s, state_interface: %s stale_threshold %f",
                 this->command_interface_name.c_str(), this->state_interface_name.c_str(), this->stale_threshold);
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "kp %f, ki %f, kd %f, max_iout %f, max_out %f",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "kp %f, ki %f, kd %f, max_iout %f, max_out %f",
                 this->pid.kp, this->pid.ki, this->pid.kd, this->pid.max_iout, this->pid.max_out);
 
     //create command subscriber
@@ -214,22 +190,6 @@ controller_interface::return_type PIDController::update() {
     if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(this->pid.out);
 
     return controller_interface::return_type::OK;
-}
-
-
-bool PIDController::check_parameter(const std::string &name, rclcpp::ParameterType type) {
-    if (!this->get_node()->has_parameter(name)) {
-        RCLCPP_ERROR(this->get_node()->get_logger(), "missing parameter: %s", name.c_str());
-        return false;
-    }
-    if (this->get_node()->get_parameter(name).get_type() != type) {
-        RCLCPP_ERROR(this->get_node()->get_logger(),
-                     "parameter type mismatch: %s, expected: %s, got: %s",
-                     name.c_str(), rclcpp::to_string(type).c_str(),
-                     this->get_node()->get_parameter(name).get_type_name().c_str());
-        return false;
-    }
-    return true;
 }
 
 

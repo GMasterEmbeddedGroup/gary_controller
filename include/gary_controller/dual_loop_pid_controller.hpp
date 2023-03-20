@@ -42,8 +42,6 @@ public:
 
 private:
 
-    bool check_parameter(const std::string& name, rclcpp::ParameterType type);
-
     rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
 
     rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr callback_handle_;

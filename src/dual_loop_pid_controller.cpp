@@ -67,99 +67,57 @@ CallbackReturn DualLoopPIDController::on_configure(const rclcpp_lifecycle::State
     RCLCPP_DEBUG(this->get_node()->get_logger(), "configuring");
 
     //get parameter: inner_command_interface
-    if (!this->check_parameter("inner_command_interface", rclcpp::ParameterType::PARAMETER_STRING)) {
-        return CallbackReturn::ERROR;
-    }
     this->inner_command_interface = this->get_node()->get_parameter("inner_command_interface").as_string();
 
     //get parameter: inner_state_interface
-    if (!this->check_parameter("inner_state_interface", rclcpp::ParameterType::PARAMETER_STRING)) {
-        return CallbackReturn::ERROR;
-    }
     this->inner_state_interface = this->get_node()->get_parameter("inner_state_interface").as_string();
 
     //get parameter: inner_kp
-    if (!this->check_parameter("inner_kp", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.inner_kp = this->get_node()->get_parameter("inner_kp").as_double();
 
     //get parameter: inner_ki
-    if (!this->check_parameter("inner_ki", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.inner_ki = this->get_node()->get_parameter("inner_ki").as_double();
 
     //get parameter: inner_kd
-    if (!this->check_parameter("inner_kd", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.inner_kd = this->get_node()->get_parameter("inner_kd").as_double();
 
     //get parameter: inner_max_out
-    if (!this->check_parameter("inner_max_out", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.inner_max_out = this->get_node()->get_parameter("inner_max_out").as_double();
 
     //get parameter: inner_max_iout
-    if (!this->check_parameter("inner_max_iout", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.inner_max_iout = this->get_node()->get_parameter("inner_max_iout").as_double();
 
     //get parameter: outer_state_interface
-    if (!this->check_parameter("outer_state_interface", rclcpp::ParameterType::PARAMETER_STRING)) {
-        return CallbackReturn::ERROR;
-    }
     this->outer_state_interface = this->get_node()->get_parameter("outer_state_interface").as_string();
 
     //get parameter: outer_kp
-    if (!this->check_parameter("outer_kp", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.outer_kp = this->get_node()->get_parameter("outer_kp").as_double();
 
     //get parameter: outer_ki
-    if (!this->check_parameter("outer_ki", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.outer_ki = this->get_node()->get_parameter("outer_ki").as_double();
 
     //get parameter: outer_kd
-    if (!this->check_parameter("outer_kd", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.outer_kd = this->get_node()->get_parameter("outer_kd").as_double();
 
     //get parameter: outer_max_out
-    if (!this->check_parameter("outer_max_out", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.outer_max_out = this->get_node()->get_parameter("outer_max_out").as_double();
 
     //get parameter: outer_max_iout
-    if (!this->check_parameter("outer_max_iout", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->pid.outer_max_iout = this->get_node()->get_parameter("outer_max_iout").as_double();
 
     //get parameter: offline_threshold
-    if (!this->check_parameter("stale_threshold", rclcpp::ParameterType::PARAMETER_DOUBLE)) {
-        return CallbackReturn::ERROR;
-    }
     this->stale_threshold = this->get_node()->get_parameter("stale_threshold").as_double();
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "inner_command_interface: %s, inner_state_interface: %s",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "inner_command_interface: %s, inner_state_interface: %s",
                 this->inner_command_interface.c_str(), this->inner_state_interface.c_str());
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "inner_kp %f, inner_ki %f, inner_kd %f, inner_max_iout %f, inner_max_out %f",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "inner_kp %f, inner_ki %f, inner_kd %f, inner_max_iout %f, inner_max_out %f",
                 this->pid.inner_kp, this->pid.inner_ki, this->pid.inner_kd, this->pid.inner_max_iout, this->pid.inner_max_out);
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "outer_state_interface: %s stale_threshold %f",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "outer_state_interface: %s stale_threshold %f",
                 this->outer_state_interface.c_str(), this->stale_threshold);
 
-    RCLCPP_INFO(this->get_node()->get_logger(), "outer_kp %f, outer_ki %f, outer_kd %f, outer_max_iout %f, outer_max_out %f",
+    RCLCPP_DEBUG(this->get_node()->get_logger(), "outer_kp %f, outer_ki %f, outer_kd %f, outer_max_iout %f, outer_max_out %f",
                 this->pid.outer_kp, this->pid.outer_ki, this->pid.outer_kd, this->pid.outer_max_iout, this->pid.outer_max_out);
 
     //create command subscriber
@@ -294,22 +252,6 @@ controller_interface::return_type DualLoopPIDController::update() {
     this->command_interfaces_[0].set_value(this->pid.inner_out);
 
     return controller_interface::return_type::OK;
-}
-
-
-bool DualLoopPIDController::check_parameter(const std::string &name, rclcpp::ParameterType type) {
-    if (!this->get_node()->has_parameter(name)) {
-        RCLCPP_ERROR(this->get_node()->get_logger(), "missing parameter: %s", name.c_str());
-        return false;
-    }
-    if (this->get_node()->get_parameter(name).get_type() != type) {
-        RCLCPP_ERROR(this->get_node()->get_logger(),
-                     "parameter type mismatch: %s, expected: %s, got: %s",
-                     name.c_str(), rclcpp::to_string(type).c_str(),
-                     this->get_node()->get_parameter(name).get_type_name().c_str());
-        return false;
-    }
-    return true;
 }
 
 
