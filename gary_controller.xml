@@ -1,10 +1,10 @@
 <library path="gary_controller">
 
-    <class name="gary_controller/OfflineBroadcaster"
-           type="gary_controller::OfflineBroadcaster"
+    <class name="gary_controller/HardwareMonitor"
+           type="gary_controller::HardwareMonitor"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            broadcast the offline status of hardware
+            monitor hardware status
         </description>
     </class>
 

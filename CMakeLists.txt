@@ -30,7 +30,7 @@ find_package(std_msgs REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-        src/offline_broadcaster.cpp
+        src/hardware_monitor.cpp
         src/pid_controller.cpp
         src/pid_controller_with_filter.cpp
         src/dual_loop_pid_controller.cpp

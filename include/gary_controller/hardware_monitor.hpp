@@ -13,11 +13,11 @@ using namespace std::chrono;
 
 namespace gary_controller {
 
-class OfflineBroadcaster : public controller_interface::ControllerInterface {
+class HardwareMonitor : public controller_interface::ControllerInterface {
 
 public:
 
-    OfflineBroadcaster();
+    HardwareMonitor();
 
 
     controller_interface::return_type init(const std::string &controller_name) override;
@@ -42,7 +42,9 @@ public:
 
 private:
     //params
-    std::string interface_name;
+    std::string offline_interface_name;
+    std::string temperature_interface_name;
+    double overheat_threshold;
     std::string diagnose_topic;
     double pub_rate;
     //publisher
