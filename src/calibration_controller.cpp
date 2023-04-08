@@ -90,7 +90,7 @@ void CalibrationController::service_callback(std::shared_ptr<gary_msgs::srv::Res
 {
     for (auto &i : this->command_interfaces_) {
         if (i.get_name() == request->motor_name) {
-            i.set_value(0.0f);
+            i.set_value(1.0f);
             response->succ = true;
             RCLCPP_INFO(this->get_node()->get_logger(), "resetting %s motor position", i.get_name().c_str());
             return;
