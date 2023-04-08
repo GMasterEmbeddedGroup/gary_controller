@@ -40,4 +40,12 @@
         </description>
     </class>
 
+    <class name="gary_controller/CalibrationController"
+           type="gary_controller::CalibrationController"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            motor calibration controller
+        </description>
+    </class>
+
 </library>

@@ -31,6 +31,7 @@ find_package(std_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
         src/hardware_monitor.cpp
+        src/calibration_controller.cpp
         src/pid_controller.cpp
         src/pid_controller_with_filter.cpp
         src/dual_loop_pid_controller.cpp
