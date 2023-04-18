@@ -234,13 +234,16 @@ controller_interface::return_type DualLoopPIDControllerWithFilter::update() {
     this->pid.outer_pout = this->pid.outer_p_filter_coefficient * this->pid.outer_pout +
                      (1 - this->pid.outer_p_filter_coefficient) * this->pid.outer_error * this->pid.outer_kp;
     // i
-    this->pid.outer_error_sum += this->pid.outer_error;
-    this->pid.outer_iout = this->pid.outer_error_sum * this->pid.outer_ki;
+//    this->pid.outer_error_sum += this->pid.outer_error;
+//    this->pid.outer_iout = this->pid.outer_error_sum * this->pid.outer_ki;
+    this->pid.outer_iout += this->pid.outer_error * this->pid.outer_ki;
     if (this->pid.outer_iout > this->pid.outer_max_iout) this->pid.outer_iout = this->pid.outer_max_iout;
     if (this->pid.outer_iout < -this->pid.outer_max_iout) this->pid.outer_iout = -this->pid.outer_max_iout;
     // d
+//    this->pid.outer_dout = this->pid.outer_d_filter_coefficient * this->pid.outer_dout +
+//                     (1 - this->pid.outer_d_filter_coefficient) * (this->pid.outer_error - this->pid.outer_last_error) * this->pid.outer_kd;
     this->pid.outer_dout = this->pid.outer_d_filter_coefficient * this->pid.outer_dout +
-                     (1 - this->pid.outer_d_filter_coefficient) * (this->pid.outer_error - this->pid.outer_last_error) * this->pid.outer_kd;
+                     (1 - this->pid.outer_d_filter_coefficient) * this->pid.outer_kd * this->state_interfaces_[0].get_value();
     this->pid.outer_last_error = this->pid.outer_error;
     //sum
     this->pid.outer_out = this->pid.outer_pout + this->pid.outer_iout + this->pid.outer_dout;
@@ -256,8 +259,9 @@ controller_interface::return_type DualLoopPIDControllerWithFilter::update() {
     this->pid.inner_pout = this->pid.inner_p_filter_coefficient * this->pid.inner_pout +
                            (1 - this->pid.inner_p_filter_coefficient) * this->pid.inner_error * this->pid.inner_kp;
     // i
-    this->pid.inner_error_sum += this->pid.inner_error;
-    this->pid.inner_iout = this->pid.inner_error_sum * this->pid.inner_ki;
+//    this->pid.inner_error_sum += this->pid.inner_error;
+//    this->pid.inner_iout = this->pid.inner_error_sum * this->pid.inner_ki;
+    this->pid.inner_iout += this->pid.inner_error * this->pid.inner_ki;
     if (this->pid.inner_iout > this->pid.inner_max_iout) this->pid.inner_iout = this->pid.inner_max_iout;
     if (this->pid.inner_iout < -this->pid.inner_max_iout) this->pid.inner_iout = -this->pid.inner_max_iout;
     // d
