@@ -20,7 +20,11 @@ public:
     HardwareMonitor();
 
 
-    controller_interface::return_type init(const std::string &controller_name) override;
+    CallbackReturn on_init() override{ return CallbackReturn::SUCCESS; };
+
+    controller_interface::return_type init(const std::string &controller_name,
+                                           const std::string &namespace_,
+                                           const rclcpp::NodeOptions &node_options) override;
 
 
     controller_interface::InterfaceConfiguration command_interface_configuration() const override;
@@ -38,7 +42,7 @@ public:
     CallbackReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override;
 
 
-    controller_interface::return_type update() override;
+    controller_interface::return_type update(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
     //params

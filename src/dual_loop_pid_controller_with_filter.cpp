@@ -11,10 +11,12 @@ DualLoopPIDControllerWithFilter::DualLoopPIDControllerWithFilter() : controller_
                                  cmd_buffer(nullptr),
                                  last_cmd_time() {}
 
-controller_interface::return_type DualLoopPIDControllerWithFilter::init(const std::string &controller_name) {
+controller_interface::return_type DualLoopPIDControllerWithFilter::init(const std::string &controller_name,
+                                                                        const std::string &namespace_,
+                                                                        const rclcpp::NodeOptions &node_options) {
 
     //call the base class initializer
-    auto ret = ControllerInterface::init(controller_name);
+    auto ret = ControllerInterface::init(controller_name,namespace_,node_options);
     if (ret != controller_interface::return_type::OK) return ret;
 
     this->auto_declare("inner_command_interface", "");
@@ -185,7 +187,7 @@ CallbackReturn DualLoopPIDControllerWithFilter::on_deactivate(const rclcpp_lifec
 }
 
 
-controller_interface::return_type DualLoopPIDControllerWithFilter::update() {
+controller_interface::return_type DualLoopPIDControllerWithFilter::update(const rclcpp::Time & time, const rclcpp::Duration & period) {
     RCLCPP_DEBUG(this->get_node()->get_logger(), "updating");
 
     //publish

@@ -16,8 +16,10 @@ class CalibrationController : public controller_interface::ControllerInterface {
 
 public:
 
-    controller_interface::return_type init(const std::string &controller_name) override;
-
+    controller_interface::return_type init(const std::string &controller_name,
+                                           const std::string &namespace_,
+                                           const rclcpp::NodeOptions &node_options) override;
+    CallbackReturn on_init() override{ return CallbackReturn::SUCCESS; };
 
     controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
@@ -34,7 +36,7 @@ public:
     CallbackReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override;
 
 
-    controller_interface::return_type update() override;
+    controller_interface::return_type update(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
     void service_callback(std::shared_ptr<gary_msgs::srv::ResetMotorPosition::Request> request,
                           std::shared_ptr<gary_msgs::srv::ResetMotorPosition::Response> response);

@@ -6,10 +6,12 @@ using namespace gary_controller;
 
 HardwareMonitor::HardwareMonitor() : overheat_threshold(0.0f), pub_rate(10.0f), publisher(), flag_publish(false) {}
 
-controller_interface::return_type HardwareMonitor::init(const std::string &controller_name) {
+controller_interface::return_type HardwareMonitor::init(const std::string &controller_name,
+                                                        const std::string &namespace_,
+                                                        const rclcpp::NodeOptions &node_options) {
 
     //call the base class initializer
-    auto ret = ControllerInterface::init(controller_name);
+    auto ret = ControllerInterface::init(controller_name,namespace_,node_options);
     if (ret != controller_interface::return_type::OK) return ret;
 
     this->auto_declare("offline_interface_name", "offline");
@@ -96,7 +98,7 @@ CallbackReturn HardwareMonitor::on_deactivate(const rclcpp_lifecycle::State &pre
 }
 
 
-controller_interface::return_type HardwareMonitor::update() {
+controller_interface::return_type HardwareMonitor::update(const rclcpp::Time & time, const rclcpp::Duration & period) {
     RCLCPP_DEBUG(this->get_node()->get_logger(), "updating");
 
     if (this->flag_publish) {
