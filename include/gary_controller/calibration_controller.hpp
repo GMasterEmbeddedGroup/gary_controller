@@ -2,8 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "controller_interface/controller_interface.hpp"
-#include "realtime_tools/realtime_publisher.h"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "gary_msgs/srv/reset_motor_position.hpp"
 #include <chrono>
 
 
@@ -13,12 +12,9 @@ using namespace std::chrono;
 
 namespace gary_controller {
 
-class OfflineBroadcaster : public controller_interface::ControllerInterface {
+class CalibrationController : public controller_interface::ControllerInterface {
 
 public:
-
-    OfflineBroadcaster();
-
 
     controller_interface::return_type init(const std::string &controller_name) override;
 
@@ -40,15 +36,16 @@ public:
 
     controller_interface::return_type update() override;
 
+    void service_callback(std::shared_ptr<gary_msgs::srv::ResetMotorPosition::Request> request,
+                          std::shared_ptr<gary_msgs::srv::ResetMotorPosition::Response> response);
+
 private:
     //params
     std::string interface_name;
-    std::string diagnose_topic;
-    double pub_rate;
-    //publisher
-    std::unique_ptr<realtime_tools::RealtimePublisher<diagnostic_msgs::msg::DiagnosticArray>> publisher;
+    std::vector<std::string> motor_names;
 
-    rclcpp::Time last_time;
-    bool flag_publish;
+    //service server
+    rclcpp::Service<gary_msgs::srv::ResetMotorPosition>::SharedPtr service;
+
 };
 }

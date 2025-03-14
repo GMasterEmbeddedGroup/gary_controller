@@ -18,7 +18,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(controller_interface REQUIRED)
-find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
@@ -31,8 +30,12 @@ find_package(std_msgs REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-        src/offline_broadcaster.cpp
+        src/hardware_monitor.cpp
+        src/calibration_controller.cpp
         src/pid_controller.cpp
+        src/pid_controller_with_filter.cpp
+        src/dual_loop_pid_controller.cpp
+        src/dual_loop_pid_controller_with_filter.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
@@ -40,7 +43,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 ament_target_dependencies(
         ${PROJECT_NAME}
         controller_interface
-        hardware_interface
         pluginlib
         rclcpp
         rclcpp_lifecycle
@@ -83,7 +85,6 @@ ament_export_include_directories(
 
 ament_export_dependencies(
         controller_interface
-        hardware_interface
         pluginlib
         rclcpp
         rclcpp_lifecycle

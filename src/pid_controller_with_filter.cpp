@@ -1,17 +1,17 @@
-#include "gary_controller/pid_controller.hpp"
+#include "gary_controller/pid_controller_with_filter.hpp"
 
 
 using namespace gary_controller;
 
 
-PIDController::PIDController() : controller_interface::ControllerInterface(),
+PIDControllerWithFilter::PIDControllerWithFilter() : controller_interface::ControllerInterface(),
                                  pid(),
                                  stale_threshold(),
                                  cmd_subscription(nullptr),
                                  cmd_buffer(nullptr),
                                  last_cmd_time() {}
 
-controller_interface::return_type PIDController::init(const std::string &controller_name) {
+controller_interface::return_type PIDControllerWithFilter::init(const std::string &controller_name) {
 
     //call the base class initializer
     auto ret = ControllerInterface::init(controller_name);
@@ -22,6 +22,8 @@ controller_interface::return_type PIDController::init(const std::string &control
     this->auto_declare("kp", 0.0f);
     this->auto_declare("ki", 0.0f);
     this->auto_declare("kd", 0.0f);
+    this->auto_declare("p_filter_coefficient", 0.0f);
+    this->auto_declare("d_filter_coefficient", 0.0f);
     this->auto_declare("max_out", 0.0f);
     this->auto_declare("max_iout", 0.0f);
     this->auto_declare("stale_threshold", 0.1f);
@@ -30,29 +32,29 @@ controller_interface::return_type PIDController::init(const std::string &control
 }
 
 
-controller_interface::InterfaceConfiguration PIDController::state_interface_configuration() const {
+controller_interface::InterfaceConfiguration PIDControllerWithFilter::state_interface_configuration() const {
 
     controller_interface::InterfaceConfiguration state_interfaces_config;
     state_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-    if (!this->state_interface_name.empty()) state_interfaces_config.names.emplace_back(this->state_interface_name);
+    state_interfaces_config.names.emplace_back(this->state_interface_name);
 
     return state_interfaces_config;
 }
 
 
-controller_interface::InterfaceConfiguration PIDController::command_interface_configuration() const {
+controller_interface::InterfaceConfiguration PIDControllerWithFilter::command_interface_configuration() const {
 
     controller_interface::InterfaceConfiguration command_interfaces_config;
     command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-    if (!this->command_interface_name.empty()) command_interfaces_config.names.emplace_back(this->command_interface_name);
+    command_interfaces_config.names.emplace_back(this->command_interface_name);
 
     return command_interfaces_config;
 }
 
 
-CallbackReturn PIDController::on_configure(const rclcpp_lifecycle::State &previous_state) {
+CallbackReturn PIDControllerWithFilter::on_configure(const rclcpp_lifecycle::State &previous_state) {
     RCL_UNUSED(previous_state);
 
     RCLCPP_DEBUG(this->get_node()->get_logger(), "configuring");
@@ -75,6 +77,12 @@ CallbackReturn PIDController::on_configure(const rclcpp_lifecycle::State &previo
     //get parameter: max_out
     this->pid.max_out = this->get_node()->get_parameter("max_out").as_double();
 
+    //get parameter: p_filter_coefficient
+    this->pid.p_filter_coefficient = this->get_node()->get_parameter("p_filter_coefficient").as_double();
+
+    //get parameter: d_filter_coefficient
+    this->pid.d_filter_coefficient = this->get_node()->get_parameter("d_filter_coefficient").as_double();
+
     //get parameter: max_iout
     this->pid.max_iout = this->get_node()->get_parameter("max_iout").as_double();
 
@@ -96,20 +104,20 @@ CallbackReturn PIDController::on_configure(const rclcpp_lifecycle::State &previo
                                                                                                this->last_cmd_time = this->get_node()->get_clock()->now().seconds();
                                                                                            });
     //create pid publisher
-    auto pid_publisher_ = this->get_node()->create_publisher<gary_msgs::msg::PID>("~/pid", rclcpp::SystemDefaultsQoS());
-    this->pid_publisher = std::make_unique<realtime_tools::RealtimePublisher<gary_msgs::msg::PID>>(pid_publisher_);
+    auto pid_publisher_ = this->get_node()->create_publisher<gary_msgs::msg::PIDWithFilter>("~/pid", rclcpp::SystemDefaultsQoS());
+    this->pid_publisher = std::make_unique<realtime_tools::RealtimePublisher<gary_msgs::msg::PIDWithFilter>>(pid_publisher_);
     this->pid_publisher->unlock();
 
     //creat param callback
     this->callback_handle_ = this->get_node()->add_on_set_parameters_callback(
-            std::bind(&PIDController::parametersCallback, this, std::placeholders::_1));
+            std::bind(&PIDControllerWithFilter::parametersCallback, this, std::placeholders::_1));
 
     RCLCPP_INFO(this->get_node()->get_logger(), "configured");
     return CallbackReturn::SUCCESS;
 }
 
 
-CallbackReturn PIDController::on_activate(const rclcpp_lifecycle::State &previous_state) {
+CallbackReturn PIDControllerWithFilter::on_activate(const rclcpp_lifecycle::State &previous_state) {
     RCL_UNUSED(previous_state);
 
     RCLCPP_DEBUG(this->get_node()->get_logger(), "activating");
@@ -118,15 +126,13 @@ CallbackReturn PIDController::on_activate(const rclcpp_lifecycle::State &previou
     msg.data = 0.0f;
     this->cmd_buffer.writeFromNonRT(std::make_shared<std_msgs::msg::Float64>(msg));
 
-    this->pid_publisher->msg_.header.frame_id = "";
-
     RCLCPP_INFO(this->get_node()->get_logger(), "activated");
 
     return CallbackReturn::SUCCESS;
 }
 
 
-CallbackReturn PIDController::on_deactivate(const rclcpp_lifecycle::State &previous_state) {
+CallbackReturn PIDControllerWithFilter::on_deactivate(const rclcpp_lifecycle::State &previous_state) {
     RCL_UNUSED(previous_state);
 
     RCLCPP_DEBUG(this->get_node()->get_logger(), "deactivating");
@@ -138,7 +144,7 @@ CallbackReturn PIDController::on_deactivate(const rclcpp_lifecycle::State &previ
 }
 
 
-controller_interface::return_type PIDController::update() {
+controller_interface::return_type PIDControllerWithFilter::update() {
     RCLCPP_DEBUG(this->get_node()->get_logger(), "updating");
 
     //publish
@@ -155,7 +161,7 @@ controller_interface::return_type PIDController::update() {
     //check if cmd is stale
     if (this->get_node()->get_clock()->now().seconds() - this->last_cmd_time > this->stale_threshold) {
         this->pid.set = 0;
-        this->pid.feedback = this->state_interfaces_.empty() ? 0 : this->state_interfaces_[0].get_value();
+        this->pid.feedback = this->state_interfaces_[0].get_value();
         this->pid.error = 0;
         this->pid.error_sum = 0;
         this->pid.last_error = 0;
@@ -163,38 +169,40 @@ controller_interface::return_type PIDController::update() {
         this->pid.iout = 0;
         this->pid.dout = 0;
         this->pid.out = 0;
-        if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(0);
+        this->command_interfaces_[0].set_value(0);
         return controller_interface::return_type::OK;
     }
 
 
     this->pid.set = command->data;
-    this->pid.feedback = this->state_interfaces_.empty() ? 0 : this->state_interfaces_[0].get_value();
+    this->pid.feedback = this->state_interfaces_[0].get_value();
     this->pid.error = this->pid.set - this->pid.feedback;
 
     // p
-    this->pid.pout = this->pid.error * this->pid.kp;
+    this->pid.pout = this->pid.p_filter_coefficient * this->pid.pout +
+            (1 - this->pid.p_filter_coefficient) * this->pid.error * this->pid.kp;
     // i
     this->pid.error_sum += this->pid.error;
     this->pid.iout = this->pid.error_sum * this->pid.ki;
     if (this->pid.iout > this->pid.max_iout) this->pid.iout = this->pid.max_iout;
     if (this->pid.iout < -this->pid.max_iout) this->pid.iout = -this->pid.max_iout;
     // d
-    this->pid.dout = (this->pid.error - this->pid.last_error) * this->pid.kd;
+    this->pid.dout = this->pid.d_filter_coefficient * this->pid.dout +
+                     (1 - this->pid.d_filter_coefficient) * (this->pid.error - this->pid.last_error) * this->pid.kd;
     this->pid.last_error = this->pid.error;
     //sum
     this->pid.out = this->pid.pout + this->pid.iout + this->pid.dout;
     if (this->pid.out > this->pid.max_out) this->pid.out = this->pid.max_out;
     if (this->pid.out < -this->pid.max_out) this->pid.out = -this->pid.max_out;
 
-    if(!this->command_interfaces_.empty()) this->command_interfaces_[0].set_value(this->pid.out);
+    this->command_interfaces_[0].set_value(this->pid.out);
 
     return controller_interface::return_type::OK;
 }
 
 
 rcl_interfaces::msg::SetParametersResult
-PIDController::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
+PIDControllerWithFilter::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
     for (const auto &i: parameters) {
         if (i.get_name() == "kp" && i.get_type() == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
             this->pid.kp = i.as_double();
@@ -216,6 +224,14 @@ PIDController::parametersCallback(const std::vector<rclcpp::Parameter> &paramete
             this->pid.max_iout = i.as_double();
             RCLCPP_INFO(this->get_node()->get_logger(), "update param max_iout %f", this->pid.max_iout);
         }
+        if (i.get_name() == "p_filter_coefficient" && i.get_type() == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
+            this->pid.p_filter_coefficient = i.as_double();
+            RCLCPP_INFO(this->get_node()->get_logger(), "update param p_filter_coefficient %f", this->pid.p_filter_coefficient);
+        }
+        if (i.get_name() == "d_filter_coefficient" && i.get_type() == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
+            this->pid.d_filter_coefficient = i.as_double();
+            RCLCPP_INFO(this->get_node()->get_logger(), "update param d_filter_coefficient %f", this->pid.d_filter_coefficient);
+        }
     }
 
     rcl_interfaces::msg::SetParametersResult result;
@@ -227,4 +243,4 @@ PIDController::parametersCallback(const std::vector<rclcpp::Parameter> &paramete
 
 #include "pluginlib/class_list_macros.hpp"
 
-PLUGINLIB_EXPORT_CLASS(gary_controller::PIDController, controller_interface::ControllerInterface)
+PLUGINLIB_EXPORT_CLASS(gary_controller::PIDControllerWithFilter, controller_interface::ControllerInterface)
